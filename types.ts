@@ -21,3 +21,10 @@ export type ColumnValue = string | number | boolean | Uint8Array | Date | null |
 export interface Row {
   [key: string]: ColumnValue
 }
+
+export interface Keywords {
+  mysqlKeywords: Set<string>,
+  schemaNames: Set<string>,
+  objectNames: Set<string>,
+  objectDotNames: Set<string>
+}

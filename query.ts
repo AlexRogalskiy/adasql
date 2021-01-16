@@ -20,17 +20,25 @@ import {
 import prettyoutput from 'prettyoutput';
 
 import {
+  CompleterResult
+} from 'readline';
+
+import {
   AWSConfig,
   AWSInfo,
-  Row
+  Row,
+  Keywords
 } from './types';
 
 import hydrateRecords from './hydrateRecords';
+import fetchKeywords from './fetchKeywords';
 
 const DB_SELECT_COMMAND_RE = /^(?:use|\\c(?:onnect)?)\s+([^;\s]+);?$/i;
 const TX_BEGIN_COMMAND_RE = /^begin;$/i
 const TX_ROLLBACK_COMMAND_RE = /^rollback;$/i
 const TX_COMMIT_COMMAND_RE = /^commit;$/i
+
+let keywords: Promise<Keywords>;
 
 export default async function query(awsConfig: AWSConfig, awsInfo: AWSInfo, clusterId: string, secretName: string, database?: string): Promise<void> {
   const resourceArn = `arn:${awsInfo.partition}:rds:${awsInfo.region}:${awsInfo.accountId}:cluster:${clusterId}`;
@@ -51,6 +59,8 @@ export default async function query(awsConfig: AWSConfig, awsInfo: AWSInfo, clus
     process.exit(1);
   }
 
+  keywords = fetchKeywords(rdsDataClient, resourceArn, secretArn, database);
+
   let transactionId: string | undefined;
 
   replStart({
@@ -60,6 +70,7 @@ export default async function query(awsConfig: AWSConfig, awsInfo: AWSInfo, clus
       const dbMatch = command.match(DB_SELECT_COMMAND_RE);
       if (dbMatch) {
         database = dbMatch[1];
+        keywords = fetchKeywords(rdsDataClient, resourceArn, secretArn, database);
         cb(null, `Now using database ${database}`);
         return;
       }
@@ -165,6 +176,48 @@ export default async function query(awsConfig: AWSConfig, awsInfo: AWSInfo, clus
       }
 
       cb(null, output);
+    },
+
+    // Loosely based on the mysql CLI completion algorithm
+    completer: async function(line: string, callback: (err?: null | Error, result?: CompleterResult) => void) {
+      try {
+        if (line === '' || line[0] === '\\') {
+          callback(null, [
+            [],
+            line
+          ]);
+        }
+
+        let token = line.split(/\s+/).pop() as string;
+        const quoted = token[0] === '`';
+        const dbNamesOnly = token.includes('.') || quoted;
+        if (quoted) {
+          token = token.substr(1);
+        }
+
+        const currentKeywords = await keywords;
+
+        const complete = (keywords: Set<string>) => Array.from(keywords)
+          .filter(keyword => keyword.startsWith(token))
+          .map(keyword => line + keyword.substr(token.length) + (quoted ? '`' : ''));
+
+        const completions = complete(currentKeywords.schemaNames).concat(complete(currentKeywords.objectNames));
+
+        if (!dbNamesOnly) {
+          Array.prototype.push.apply(completions, complete(currentKeywords.mysqlKeywords));
+        }
+
+        if (token.includes('.')) {
+          Array.prototype.push.apply(completions, complete(currentKeywords.objectDotNames));
+        }
+
+        callback(null, [
+          completions.sort(),
+          line
+        ]);
+      } catch (err) {
+        callback(err);
+      }
     },
     writer: prettyoutput
   });
