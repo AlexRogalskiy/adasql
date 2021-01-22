@@ -32,7 +32,7 @@ export default async function fetchKeywords(rdsDataClient: RDSDataClient, resour
   }
 
   let objectNames: Set<string>;
-  let objectDotNames: Set<string> = new Set();
+  const objectDotNames: Set<string> = new Set();
 
   if (database) {
     try {
