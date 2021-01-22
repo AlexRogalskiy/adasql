@@ -1,6 +1,6 @@
 {
   "name": "adasql",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "CLI SQL client for AWS Aurora Data API Databases",
   "bin": {
     "adasql": "index.js"
