@@ -23,6 +23,7 @@ export interface Row {
 }
 
 export interface Keywords {
+  replKeywords: Set<string>,
   mysqlKeywords: Set<string>,
   schemaNames: Set<string>,
   objectNames: Set<string>,

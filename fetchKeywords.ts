@@ -8,6 +8,15 @@ import { Keywords } from './types';
 
 import mysqlKeywords from './mysqlKeywords';
 
+const replKeywords = new Set([
+  '.break',
+  '.clear',
+  '.editor',
+  '.exit',
+  '.help',
+  '.save'
+]);
+
 export default async function fetchKeywords(rdsDataClient: RDSDataClient, resourceArn: string, secretArn: string, database?: string): Promise<Keywords> {
   let records;
 
@@ -86,6 +95,7 @@ export default async function fetchKeywords(rdsDataClient: RDSDataClient, resour
   }
 
   return {
+    replKeywords,
     mysqlKeywords,
     schemaNames,
     objectNames,

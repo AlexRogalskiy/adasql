@@ -38,3 +38,6 @@ Record Count: 1
 adasql will show you information up top to help you ensure you're connecting to the right DB. It will then look for AWS Aurora Database Clusters with the Data API enabled. If it finds only one database cluster it will use it, otherwise it will prompt you for the database to connect to. It will then look for AWS Secrets Manager Secrets to use for authentication when connecting. Again, if it finds only one secret it will use it, otherwise it will prompt you for the secret to use.
 
 Transactions are supported, though note the Data API doesn't support save points or nested transactions.
+
+### Canceling commands
+If you find yourself in the middle of a multi-line statement and wish to cancel it, enter `.clear`. This will reset the state of the REPL, though it will not affect a transaction if it is in progress.

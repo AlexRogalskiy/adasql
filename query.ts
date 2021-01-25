@@ -188,7 +188,8 @@ export default async function query(awsConfig: AWSConfig, awsInfo: AWSInfo, clus
           ]);
         }
 
-        let token = line.split(/\s+/).pop() as string;
+        const tokens = line.split(/\s+/);
+        let token = tokens.pop() as string;
         const quoted = token[0] === '`';
         const dbNamesOnly = token.includes('.') || quoted;
         if (quoted) {
@@ -202,6 +203,10 @@ export default async function query(awsConfig: AWSConfig, awsInfo: AWSInfo, clus
           .map(keyword => line + keyword.substr(token.length) + (quoted ? '`' : ''));
 
         const completions = complete(currentKeywords.schemaNames).concat(complete(currentKeywords.objectNames));
+
+        if (tokens.length === 0 || (tokens.length === 1 && tokens[0] === '')) {
+          Array.prototype.push.apply(completions, complete(currentKeywords.replKeywords));
+        }
 
         if (!dbNamesOnly) {
           Array.prototype.push.apply(completions, complete(currentKeywords.mysqlKeywords));
