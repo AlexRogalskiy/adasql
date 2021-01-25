@@ -18,7 +18,7 @@ const replKeywords = new Set([
 ]);
 
 export default async function fetchKeywords(rdsDataClient: RDSDataClient, resourceArn: string, secretArn: string, database?: string): Promise<Keywords> {
-  let records;
+  let records: Field[][] | undefined;
 
   try {
     ({ records } = await rdsDataClient.send(
@@ -44,6 +44,8 @@ export default async function fetchKeywords(rdsDataClient: RDSDataClient, resour
   const objectDotNames: Set<string> = new Set();
 
   if (database) {
+    let records: Field[][] | undefined;
+
     try {
       ({ records } = await rdsDataClient.send(
         new ExecuteStatementCommand({
